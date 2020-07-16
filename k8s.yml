@@ -1,0 +1,53 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: sta
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  name: sta
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sta
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 50%
+    type: RollingUpdate
+  template:
+    metadata:
+      # annotations:
+      # config.linkerd.io/skip-outbound-ports: "4222,5432,6379"
+      # linkerd.io/inject: enabled
+      creationTimestamp: null
+      labels:
+        app: sta
+    spec:
+      serviceAccountName: sta
+      containers:
+        - name: sta
+          image: sta:latest
+          imagePullPolicy: IfNotPresent # Always
+          ports:
+            - containerPort: 8080
+              name: http
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sta
+spec:
+  type: LoadBalancer
+  selector:
+    app: sta
+  ports:
+    - name: http-lb
+      port: 8080
+      targetPort: 8080
